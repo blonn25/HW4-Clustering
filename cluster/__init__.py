@@ -3,6 +3,8 @@ BMI 203: Biocomputing Algorithms - Winter 2026
 HW 3: Clustering
 """
 
+__version__ = "0.1.0"
+
 from .kmeans import KMeans
 from .silhouette import Silhouette
 from .utils import (
