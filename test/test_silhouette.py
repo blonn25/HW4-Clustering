@@ -1,3 +1,11 @@
 # write your silhouette score unit tests here
-def test_2():
+
+from cluster import kmeans, silhouette
+import pytest
+
+
+def test_silhouette_():
+    """
+    Unit test for...
+    """
     assert True

@@ -21,23 +21,28 @@ class KMeans:
                 the maximum number of iterations before quitting model fit
         """
 
-        # check that inputs are of correct type and are within the expected range
-        if type(k) == int and k > 0:
-            self.k = k
-        else:
-            raise TypeError('k must be an integer greater than 0')
+        # Check that k is of the correct type and within the expected range
+        if not isinstance(k, int):
+            raise TypeError('k must be an integer')
+        if k <= 0:
+            raise ValueError('k must be greater than 0')
         
-        if type(tol) == float and tol >= 0:
-            self.tol = tol
-        else:
-            raise TypeError('tol must be a float greater than or equal to 0')
+        # Check that tol is of the correct type and within the expected range
+        if not isinstance(tol, (int, float)):
+            raise TypeError('tol must be a number')
+        if tol < 0:
+            raise ValueError('tol must be greater than or equal to 0')
+
+        # Check that max_iter is of the correct type and within the expected range
+        if not isinstance(max_iter, int):
+            raise TypeError('max_iter must be an integer')
+        if max_iter <= 0:
+            raise ValueError('max_iter must be greater than 0')
         
-        if type(max_iter) == int and max_iter > 0:
-            self.max_iter = max_iter
-        else:
-            raise TypeError('max_iter must be an integer greater than 0')
-        
-        # initialize empty centroids and data_pts parameters
+        # Initialize instance variables
+        self.k = k
+        self.tol = float(tol)
+        self.max_iter = max_iter
         self.centroids = None
         self.mse = -1.0
         
@@ -57,38 +62,43 @@ class KMeans:
                 A 2D matrix where the rows are observations and columns are features
         """
 
-        # check that input matrix is of the correct type and shape 
-        # if so, select k random centroids from the data points
-        if type(mat) == np.ndarray and mat.ndim == 2 and mat.size > 0:
-            self.centroids = mat[np.random.choice(mat.shape[0], self.k, replace=False), :]
-        else:
-            raise TypeError('Input matrix must be a non-empty 2D numpy array where the' \
-                            'rows are observations and columns are features')        
+        # Check that input matrix is of the correct type, shape, and contents 
+        if not isinstance(mat, np.ndarray):
+            raise TypeError('Input matrix must be a numpy array')
+        if mat.size == 0:
+            raise ValueError('Input matrix must be non-empty')
+        if mat.ndim != 2:
+            raise ValueError('Input matrix must be 2-dimensional')
+        if mat.shape[0] < self.k:
+            raise ValueError('Input matrix must have at least k rows/observations')
 
-        # 1.5. Iterate until convergence or max iterations reached.
-        for i in range(self.max_iter):
+        # 1. Initialize k centroids from k random data points (without replacement)
+        self.centroids = mat[np.random.choice(mat.shape[0], self.k, replace=False), :]
 
-            # 2. For each data point, compute the distance to each centroid, and find the closest centroid.
+        # 1.5. Iterate until the max centroid change is within tolerance or max iterations reached
+        for _ in range(self.max_iter):
+
+            # 2. For each data point, compute the distance to each centroid, and find the closest centroid
             dists = cdist(self.centroids, mat, metric='euclidean')
             classifications = np.argmin(dists, axis=0)
 
-            # 3. Update the centroids to be the average of their closest data points found in (2).
+            # 3. Update the centroids to be the average of their closest data points found in (2)
             prev_centroids = self.centroids.copy()
-            for idx in range(self.k):
-                self.centroids[idx] = mat[classifications == idx].mean(axis=0)
+            for i in range(self.k):
+                self.centroids[i] = mat[classifications == i].mean(axis=0)
 
-            # 4. Compute max change in a centroid from the previous centroid.
+            # 4. Compute max change in a centroid from the previous centroid
             centroid_change = np.linalg.norm(self.centroids - prev_centroids, axis=1)
             max_change = np.max(centroid_change)
 
-            # 5. Repeat (2) through (4) until the change in centroid is less than some epsilon.
+            # 5. Repeat (2) through (4) until the change in centroid is less than user-defined tolerance
             if max_change < self.tol:
                 break
         
-        # 6. Compute and store the mse between each data point and it's closest centroid.
+        # 6. Compute and store the mse between each data point and it's closest centroid
         dists = cdist(self.centroids, mat, metric='euclidean')
-        self.mse = np.mean(np.min(dists, axis=0)**2)
-        
+        min_dists = np.min(dists, axis=0)
+        self.mse = np.mean(min_dists**2)
 
     def predict(self, mat: np.ndarray) -> np.ndarray:
         """
@@ -107,17 +117,21 @@ class KMeans:
                 a 1D array with the cluster label for each of the observations in `mat`
         """
 
-        # check that input matrix is of the correct type and shape 
-        if type(mat) == np.ndarray and mat.ndim == 2 and mat.size > 0:
-            pass
-        else:
-            raise TypeError('Input matrix must be a non-empty 2D numpy array where the' \
-                            'rows are observations and columns are features')
+        # Check that input matrix is of the correct type, shape, and contents 
+        if not isinstance(mat, np.ndarray):
+            raise TypeError('Input matrix must be a numpy array')
+        if mat.size == 0:
+            raise ValueError('Input matrix must be non-empty')
+        if mat.ndim != 2:
+            raise ValueError('Input matrix must be 2-dimensional')
+        if mat.shape[1] != self.centroids.shape[1]:
+            raise ValueError(f'Input matrix must have the same number of columns/features as the model\'s centroids {self.centroids.shape[1]}')
         
-        # compute the distances from each data point to each centroid
+        # Compute the distances from each data point to each centroid
         dists = cdist(self.centroids, mat, metric='euclidean')
 
-        # for each data point, get the index of the centroid to which it is closest to
+        # For each data point, get the index of the centroid to which it is closest to
+        # This index will be the cluster label for that data point
         classifications = np.argmin(dists, axis=0)
         return classifications
 
