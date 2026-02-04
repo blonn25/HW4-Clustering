@@ -3,7 +3,7 @@ from scipy.spatial.distance import cdist
 
 
 class KMeans:
-    def __init__(self, k: int, tol: float = 1e-6, max_iter: int = 100):
+    def __init__(self, k: int, tol: float = 1e-6, max_iter: int = 100, init='k-means++'):
         """
         In this method you should initialize whatever attributes will be required for the class.
 
@@ -19,6 +19,9 @@ class KMeans:
                 the minimum error tolerance from previous error during optimization to quit the model fit
             max_iter: int
                 the maximum number of iterations before quitting model fit
+            init: str
+                the method for initializing centroids; either 'random or 'k-means++' (default: 'k-means++')
+                syntax inspired by sklearn KMeans class ()
         """
 
         # Check that k is of the correct type and within the expected range
@@ -39,13 +42,56 @@ class KMeans:
         if max_iter <= 0:
             raise ValueError('max_iter must be greater than 0')
         
+        # Check that init is of the correct type and within the expected options
+        if not isinstance(init, str):
+            raise TypeError('init must be a string')
+        if init not in ['random', 'k-means++']:
+            raise ValueError("init must be either 'random' or 'k-means++'")
+        
         # Initialize instance variables
         self.k = k
         self.tol = float(tol)
         self.max_iter = max_iter
+        self.init = init
         self.centroids = None
         self.mse = -1.0
-        
+    
+    def _init_centroids(self, mat: np.ndarray):
+        """
+        Initializes the centroids for k-means clustering based on the specified method.
+
+        inputs:
+            mat: np.ndarray
+                A 2D matrix where the rows are observations and columns are features
+        """
+
+        # If specified, use the k-means++ method to initialize centroids
+        if self.init == 'k-means++':
+
+            # Randomly select the first centroid from the data points
+            init_idx = np.random.randint(0, mat.shape[0])
+            self.centroids = mat[init_idx: init_idx + 1]    # keep proper 2D shape
+
+            # Iteratively select the remaining k-1 centroids
+            for _ in range(self.k - 1):
+
+                # Compute the distance from each data point to the nearest centroid already selected
+                dists = cdist(self.centroids, mat, metric='euclidean')
+                min_dists = np.min(dists, axis=0)
+
+                # Compute the probability distribution proportional to the squared distances
+                probs = min_dists**2
+                probs /= np.sum(probs)
+
+                # Select the next centroid based on the computed probabilities
+                next_idx = np.random.choice(mat.shape[0], 1, p=probs).item()
+                self.centroids = np.vstack((self.centroids, mat[next_idx: next_idx + 1]))
+
+        # Otherwise, randomly select k data points as initial centroids
+        else:
+            k_idxs = np.random.choice(mat.shape[0], self.k, replace=False)
+            self.centroids = mat[k_idxs]
+
     def fit(self, mat: np.ndarray):
         """
         Fits the kmeans algorithm onto a provided 2D matrix.
@@ -72,10 +118,10 @@ class KMeans:
         if mat.shape[0] < self.k:
             raise ValueError('Input matrix must have at least k rows/observations')
 
-        # 1. Initialize k centroids from k random data points (without replacement)
-        self.centroids = mat[np.random.choice(mat.shape[0], self.k, replace=False), :]
+        # 1. Initialize centroids randomly or with k-means++ method
+        self._init_centroids(mat)
 
-        # 1.5. Iterate until the max centroid change is within tolerance or max iterations reached
+        # Iterate until the max centroid change is within tolerance or max iterations reached
         for _ in range(self.max_iter):
 
             # 2. For each data point, compute the distance to each centroid, and find the closest centroid
