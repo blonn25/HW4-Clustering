@@ -27,7 +27,7 @@ def check_silhouette_score(clusters: np.ndarray, labels: np.ndarray, allowed_err
     return abs(sk_score - my_score.item()) < allowed_error
 
 
-############## Error Handling Tests ##############
+##### Error Handling Tests
 
 def test_silhouette_X_non_array():
     """
@@ -109,7 +109,7 @@ def test_silhouette_single_cluster():
         Silhouette().score(X, y)
 
 
-############## Sklearn Comparison Tests ##############
+##### Sklearn Comparison Tests 
 
 def test_silhouette_tight():
     """
