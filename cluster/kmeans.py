@@ -44,7 +44,7 @@ class KMeans:
         
         # Check that init is of the correct type and within the expected options
         if not isinstance(init, str):
-            raise TypeError('init must be a string')
+            raise TypeError("init must be a string and either 'random' or 'k-means++'")
         if init not in ['random', 'k-means++']:
             raise ValueError("init must be either 'random' or 'k-means++'")
         
@@ -162,6 +162,10 @@ class KMeans:
             np.ndarray
                 a 1D array with the cluster label for each of the observations in `mat`
         """
+
+        # Check that the model has been fit before predicting
+        if self.centroids is None:
+            raise RuntimeError('KMeans model must be fit before calling predict()')
 
         # Check that input matrix is of the correct type, shape, and contents 
         if not isinstance(mat, np.ndarray):
