@@ -1,6 +1,6 @@
 # Write your silhouette score unit tests here
 #
-# Note: LLMs were used to assist in writing unit tests, particularly for error handling,
+# Note: An LLM was used to assist in writing unit tests, particularly for error handling,
 #       in order to help quickly implement many tests for different error cases. However,
 #       unit tests were reviewed and edited by hand to ensure they were appropriate and correct
 
