@@ -211,21 +211,21 @@ def test_kmeans_many_k():
     """
     Unit test for KMeans with high k value
     """
-    clusters, _ = make_clusters(n=500, k=20)
-    km = KMeans(k=20)
+    clusters, _ = make_clusters(k=100, n=5000)
+    km = KMeans(k=100)
     km.fit(clusters)
     pred = km.predict(clusters)
     
     # Check that predictions are reasonable and all clusters were assigned
-    assert len(np.unique(pred)) == 20, 'Not all clusters were assigned'
+    assert len(np.unique(pred)) == 100, 'Not all clusters were assigned'
     assert km.get_centroids() is not None, 'Centroids should be set after fit'
-    assert km.get_centroids().shape == (20, clusters.shape[1]), 'Centroids shape mismatch'
+    assert km.get_centroids().shape == (100, clusters.shape[1]), 'Centroids shape mismatch'
 
 def test_kmeans_single_feature():
     """
     Unit test for KMeans on single-feature data (1D features)
     """
-    clusters, _ = make_clusters(n=100, m=1, k=3)
+    clusters, _ = make_clusters(n=100, m=1, k=2)
     km = KMeans(k=2)
     km.fit(clusters)
     pred = km.predict(clusters)
